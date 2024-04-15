@@ -19,10 +19,16 @@ export async function createInvoice(formData: FormData) {
   const date = new Date().toISOString().split('T')[0];
   const amountToCent = amount * 100;
 
-  await sql`
-    INSERT INTO invoices (customer_id, amount, status, date)
-    VALUES (${customerId}, ${amountToCent}, ${status}, ${date})
-  `
+  try {
+    await sql`
+      INSERT INTO invoices (customer_id, amount, status, date)
+      VALUES (${customerId}, ${amountToCent}, ${status}, ${date})
+    `
+  } catch (error) {
+    return {
+      message: 'Database Error: Failed to Create Invoice'
+    } 
+  }
   revalidatePath('/dashboard/invoices');
   redirect('/dashboard/invoices');
 }
@@ -32,20 +38,33 @@ export async function updateInvoice(id: string, formData: FormData) {
   const rawFormData = Object.fromEntries(formData.entries());
   const { customerId, amount, status } = UpdateInvoice.parse(rawFormData);
   const amountToCent = amount * 100;
-  await sql`
-    UPDATE invoices
-    SET customer_id = ${customerId}, amount = ${amountToCent}, status = ${status}
-    WHERE id = ${id}
-  `
+  try {
+    await sql`
+      UPDATE invoices
+      SET customer_id = ${customerId}, amount = ${amountToCent}, status = ${status}
+      WHERE id = ${id}
+    `
+  } catch (error) {
+    return {
+      message: 'Database Error: Failed to Update Invoice'
+    }
+  }
   revalidatePath('/dashboard/invoices');
   revalidatePath(`/dashboard/invoices/${id}/edit`);
   redirect('/dashboard/invoices');
 }
 
 export async function deleteInvoice(id: string) {
-  await sql`
-    DELETE FROM invoices
-    WHERE id = ${id}
-  `
+  throw new Error('Failed to Delete Invoice');
+  try {
+    await sql`
+      DELETE FROM invoices
+      WHERE id = ${id}
+    `
+  } catch (error) {
+    return {
+      message: 'Database Error: Failed to Delete Invoice'
+    }
+  }
   revalidatePath('/dashboard/invoices');
 }
